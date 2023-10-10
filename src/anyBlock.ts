@@ -2,7 +2,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { writeFile } from 'fs/promises'
 import { Annotation, GoogleKeepNote, ListContentItem } from './keep'
 import * as dotenv from 'dotenv'
-import { convertMicrosecondsToSeconds, getEnvVar } from './utils'
+import { convertMicrosecondsToSeconds, extractUrls, getEnvVar } from './utils'
 import path from 'path'
 dotenv.config()
 
@@ -44,10 +44,25 @@ interface Layout {
   style: string
 }
 
+interface Range {
+  to: number
+  from?: number
+}
+
+interface Mark {
+  range: Range
+  type: string
+  param?: string
+}
+
+interface Marks {
+  marks?: Mark[]
+}
+
 interface Text {
   text?: string
   style?: string
-  marks?: any // More detail needed for precise typing
+  marks?: Marks // More detail needed for precise typing
   checked?: boolean
 }
 
@@ -83,6 +98,28 @@ interface RelationLink {
 }
 
 type BlockWithId = { block: Block; id: string }
+
+const generateMarksForText = (text: string): Marks | Record<string, never> => {
+  const marks: Mark[] = []
+  const urls = extractUrls(text)
+  if (urls.length === 0) {
+    return {}
+  }
+
+  for (const url of urls) {
+    let range: Range = { to: url.end }
+    if (url.start > 0) {
+      range = { to: url.end, from: url.start }
+    }
+
+    marks.push({
+      range,
+      type: 'Link',
+      param: url.url,
+    })
+  }
+  return { marks }
+}
 
 const createHeaderBlock = (): BlockWithId => {
   const id = 'header'
@@ -160,11 +197,12 @@ const createTextBlocks = (textContent: string | undefined): BlockWithId[] =>
   textContent
     ? textContent.split('\n').map((text) => {
         const id = uuidv4()
+        const marks: Marks = generateMarksForText(text)
         const block = {
           id,
           text: {
             text,
-            marks: {},
+            marks,
           },
         }
         return { block, id }
@@ -204,12 +242,14 @@ const createListBlocks = (
   listContent
     ? listContent.map((item) => {
         const id = uuidv4()
+        const marks: Marks = generateMarksForText(item.text)
         const block = {
           id,
           text: {
             text: item.text,
             style: 'Checkbox',
             checked: item.isChecked,
+            marks,
           },
         }
         return { block, id }
