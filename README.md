@@ -15,6 +15,13 @@ Export your Google Keep data from [Google Takeout](https://takeout.google.com/se
 Run:
 `yarn cli -p <path-to-keep-folder>/Takeout/Keep/ -o <output-folder>`
 
+## CLI Options
+
+* `-p` or `--path` - Path to the Google Keep folder
+* `-o` or `--output` - Path to the output folder (will be created if it doesn't exist and must be different from the input folder)
+* `-a` or `--archive` - Whether to include archived notes. Defaults to `false`.
+* `-m` or `--mode` - Mode for conversion. Can be `pages` or `mixed`, and is `mixed` by default. `mixed` will convert keep notes with titles to anytype pages and keep notes without titles to anytype notes. `pages` will convert all keep notes to anytype pages, and will use the created date as the title if the keep note does not have a title.
+
 ## Import
 
 In anytype, select `file -> import` then `Any-Block` and select the output folder to bulk import.
@@ -24,8 +31,6 @@ In anytype, select `file -> import` then `Any-Block` and select the output folde
 * Does not import Google Keep tags
 * Does not import Google Keep images
 * Does not import Google Keep note colors
-* Imports all archived notes as regular pages
-* Imports everything as a page
 * Modifies the created and modified dates to match the Google Keep note
 * If the Keep note does not have a title, it uses the created date as the title
 * Automatically parses any hyperlinks or annotations

@@ -1,14 +1,22 @@
 import { generateAnyBlockFile } from './anyBlock'
+import { Settings } from './cli'
 import { GoogleKeepNote, ingestKeepJsonFiles } from './keep'
 import { ensureDirectoryExists } from './utils'
 
-export const main = async (
-  inputFolderPath: string,
-  outputFolderPath: string
-) => {
+export const main = async (settings: Settings) => {
+  const {
+    path: inputFolderPath,
+    output: outputFolderPath,
+    mode,
+    includeArchive,
+  } = settings
   let notes: GoogleKeepNote[] = []
+
   try {
-    const maybeNotes = await ingestKeepJsonFiles(inputFolderPath)
+    const maybeNotes = await ingestKeepJsonFiles(
+      inputFolderPath,
+      includeArchive
+    )
     notes = maybeNotes
   } catch (err) {
     console.error(`Error:`, err)
@@ -20,10 +28,10 @@ export const main = async (
     process.exit(1)
   }
 
-  ensureDirectoryExists(outputFolderPath)
+  await ensureDirectoryExists(outputFolderPath)
   for (const note of notes) {
     try {
-      const filePath = await generateAnyBlockFile(note, outputFolderPath)
+      const filePath = await generateAnyBlockFile(note, outputFolderPath, mode)
       console.log(`Successfully generated ${filePath}`)
     } catch (error) {
       console.error(

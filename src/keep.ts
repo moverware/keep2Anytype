@@ -118,7 +118,8 @@ const isGoogleKeepNote = (object: any): object is GoogleKeepNote => {
 }
 
 export const ingestKeepJsonFiles = async (
-  folderPath: string
+  folderPath: string,
+  includeArchive: boolean
 ): Promise<GoogleKeepNote[]> => {
   const notes: GoogleKeepNote[] = []
   const files = await fs.readdir(folderPath)
@@ -130,6 +131,9 @@ export const ingestKeepJsonFiles = async (
       try {
         const data = await fs.readFile(filePath, 'utf8')
         const note = parseGoogleKeepNote(data, filePath)
+        if (note.isArchived && !includeArchive) {
+          continue
+        }
         notes.push(note)
       } catch (error: any) {
         throw new Error(

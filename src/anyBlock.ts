@@ -4,7 +4,10 @@ import { Annotation, GoogleKeepNote, ListContentItem } from './keep'
 import * as dotenv from 'dotenv'
 import { convertMicrosecondsToSeconds, extractUrls, getEnvVar } from './utils'
 import path from 'path'
+import { Mode } from './cli'
 dotenv.config()
+
+type ObjectType = 'page' | 'note'
 
 interface Page {
   sbType: 'Page'
@@ -29,8 +32,8 @@ interface Block {
   layout?: Layout
   text?: Text
   fields?: Fields
-  featuredRelations?: any // More detail needed for precise typing
-  smartblock?: any // More detail needed for precise typing
+  featuredRelations?: any
+  smartblock?: any
 }
 
 interface Restrictions {
@@ -62,7 +65,7 @@ interface Marks {
 interface Text {
   text?: string
   style?: string
-  marks?: Marks // More detail needed for precise typing
+  marks?: Marks
   checked?: boolean
 }
 
@@ -71,7 +74,7 @@ interface Fields {
 }
 
 interface Details {
-  backlinks: any[] // More detail needed for precise typing
+  backlinks: any[]
   createdDate: number
   creator: string
   description: string
@@ -82,9 +85,9 @@ interface Details {
   lastModifiedDate: number
   lastOpenedDate: number
   layout: number
-  links: any[] // More detail needed for precise typing
+  links: any[]
   name: string
-  restrictions: any[] // More detail needed for precise typing
+  restrictions: any[]
   snippet: string
   sourceFilePath: string
   tag: string[]
@@ -121,8 +124,14 @@ const generateMarksForText = (text: string): Marks | Record<string, never> => {
   return { marks }
 }
 
-const createHeaderBlock = (): BlockWithId => {
+const createHeaderBlock = (objectType: ObjectType): BlockWithId => {
   const id = 'header'
+
+  const childrenIds = ['featuredRelations']
+  if (objectType === 'page') {
+    childrenIds.push('title', 'description')
+  }
+
   const block = {
     id,
     restrictions: {
@@ -131,7 +140,7 @@ const createHeaderBlock = (): BlockWithId => {
       drag: true,
       dropOn: true,
     },
-    childrenIds: ['title', 'description', 'featuredRelations'],
+    childrenIds,
     layout: {
       style: 'Header',
     },
@@ -256,33 +265,39 @@ const createListBlocks = (
       })
     : []
 
-const convertToAnyBlockPage = (note: GoogleKeepNote): Page => {
-  const titleText =
-    note.title ||
-    new Date(note.createdTimestampUsec / 1000).toLocaleString('en-US', {
-      month: 'long',
-      day: '2-digit',
-      year: 'numeric',
-    })
+const convertToAnyBlockPage = (note: GoogleKeepNote, mode: Mode): Page => {
+  const hasTitle = note.title !== undefined && note.title !== ''
+  const objectType = getObjectType(mode, hasTitle)
+  console.log(`Converting ${note.sourceFileName} to ${objectType}`)
 
-  const headerBlock = createHeaderBlock()
-  const titleBlock = createTitleBlock()
-  const descriptionBlock = createDescriptionBlock()
+  let titleText = ''
+  if (objectType === 'page') {
+    titleText = note.title || genTitleFromDate(note.createdTimestampUsec)
+  }
+
+  const headerBlock = createHeaderBlock(objectType)
   const featuredRelationsBlock = createFeaturedRelationsBlock()
   const textBlocks = createTextBlocks(note.textContent)
-  const annotationBlocks = createAnnotationBlocks(note.annotations)
   const listBlocks = createListBlocks(note.listContent)
+  const annotationBlocks = createAnnotationBlocks(note.annotations)
 
   const allBlocks = [
     headerBlock,
     ...textBlocks,
     ...listBlocks,
     ...annotationBlocks,
-    titleBlock,
-    descriptionBlock,
     featuredRelationsBlock,
   ]
-  const nonChildrenIds = ['header', 'title', 'description', 'featuredRelations']
+
+  if (objectType === 'page') {
+    const titleBlock = createTitleBlock()
+    const descriptionBlock = createDescriptionBlock()
+
+    allBlocks.push(titleBlock)
+    allBlocks.push(descriptionBlock)
+  }
+
+  const nonChildrenIds = ['title', 'description', 'featuredRelations']
 
   const blocks = allBlocks.map((blockWithId) => blockWithId.block)
   const childrenIds = allBlocks
@@ -292,13 +307,18 @@ const convertToAnyBlockPage = (note: GoogleKeepNote): Page => {
   const mainBlock = {
     id: '',
     restrictions: {},
-    childrenIds: [headerBlock.id, ...childrenIds],
+    childrenIds: [...childrenIds],
     smartblock: {},
   }
 
   const completeBlocks = [mainBlock, ...blocks]
 
   const tag = getEnvVar('TAG_ID')
+
+  let featuredRelations = ['type']
+  if (objectType === 'page') {
+    featuredRelations = [...featuredRelations, 'description']
+  }
 
   return {
     sbType: 'Page',
@@ -309,8 +329,8 @@ const convertToAnyBlockPage = (note: GoogleKeepNote): Page => {
           backlinks: [],
           createdDate: convertMicrosecondsToSeconds(note.createdTimestampUsec),
           creator: '',
-          description: 'Imported from Google Keep',
-          featuredRelations: ['type', 'description'],
+          description: '',
+          featuredRelations,
           iconEmoji: '',
           id: '',
           lastModifiedBy: '',
@@ -320,17 +340,17 @@ const convertToAnyBlockPage = (note: GoogleKeepNote): Page => {
           lastOpenedDate: convertMicrosecondsToSeconds(
             note.userEditedTimestampUsec
           ),
-          layout: 0,
+          layout: getLayoutNumber(objectType),
           links: [],
           name: titleText,
           restrictions: [],
-          snippet: '', // Placeholder, need more info
+          snippet: '',
           sourceFilePath: note.sourceFilePath,
           tag: [tag],
-          type: 'ot-page',
+          type: getObjectTypeString(objectType),
           workspaceId: '',
         },
-        objectTypes: ['ot-page'],
+        objectTypes: [getObjectTypeString(objectType)],
         relationLinks: relationLinks,
       },
     },
@@ -339,13 +359,52 @@ const convertToAnyBlockPage = (note: GoogleKeepNote): Page => {
 
 export const generateAnyBlockFile = async (
   note: GoogleKeepNote,
-  outputFolder: string
+  outputFolder: string,
+  mode: Mode
 ) => {
   const filePath = path.resolve(outputFolder, `${note.sourceFileName}.json`)
-  const anyBlockPage = convertToAnyBlockPage(note)
+  const anyBlockPage = convertToAnyBlockPage(note, mode)
   const serializedData = JSON.stringify(anyBlockPage, null, 2)
   await writeFile(filePath, serializedData)
   return filePath
+}
+
+const genTitleFromDate = (createdTimestampUsec: number) => {
+  return new Date(createdTimestampUsec / 1000).toLocaleString('en-US', {
+    month: 'long',
+    day: '2-digit',
+    year: 'numeric',
+  })
+}
+
+const getObjectType = (mode: Mode, hasTitle: boolean): ObjectType => {
+  if (mode === 'pages') {
+    return 'page'
+  }
+  if (mode === 'mixed') {
+    return hasTitle ? 'page' : 'note'
+  }
+  throw new Error(`Invalid mode ${mode}`)
+}
+
+const getObjectTypeString = (objectType: ObjectType): string => {
+  if (objectType === 'page') {
+    return 'ot-page'
+  }
+  if (objectType === 'note') {
+    return 'ot-note'
+  }
+  throw new Error(`Invalid object type ${objectType}`)
+}
+
+const getLayoutNumber = (objectType: ObjectType): number => {
+  if (objectType === 'page') {
+    return 0
+  }
+  if (objectType === 'note') {
+    return 9
+  }
+  throw new Error(`Invalid object type ${objectType}`)
 }
 
 const relationLinks: RelationLink[] = [
