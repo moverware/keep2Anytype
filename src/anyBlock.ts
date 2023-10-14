@@ -313,7 +313,8 @@ const convertToAnyBlockPage = (note: GoogleKeepNote, mode: Mode): Page => {
 
   const completeBlocks = [mainBlock, ...blocks]
 
-  const tag = getEnvVar('TAG_ID')
+  const tagId = getEnvVar('TAG_ID', '')
+  const tag = tagId ? [tagId] : []
 
   let featuredRelations = ['type']
   if (objectType === 'page') {
@@ -346,7 +347,7 @@ const convertToAnyBlockPage = (note: GoogleKeepNote, mode: Mode): Page => {
           restrictions: [],
           snippet: '',
           sourceFilePath: note.sourceFilePath,
-          tag: [tag],
+          tag,
           type: getObjectTypeString(objectType),
           workspaceId: '',
         },
