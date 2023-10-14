@@ -20,7 +20,7 @@ Run:
 * `-p` or `--path` - Path to the Google Keep folder
 * `-o` or `--output` - Path to the output folder (will be created if it doesn't exist and must be different from the input folder)
 * `-a` or `--archive` - Whether to include archived notes. Defaults to `false`.
-* `-m` or `--mode` - Mode for conversion. Can be `pages` or `mixed`, and is `mixed` by default. `mixed` will convert keep notes with titles to anytype pages and keep notes without titles to anytype notes. `pages` will convert all keep notes to anytype pages, and will use the created date as the title if the keep note does not have a title.
+* `-m` or `--mode` - Mode for conversion. Can be `pages` or `mixed`. Defaults to `mixed`. `mixed` mode will convert Keep notes with titles to Anytype `page` and Keep notes without titles to Anytype `note`. `pages` mode will convert all Keep notes to Anytype `page`, and will use the created date as the title if the Keep note does not have a title.
 
 ## Import
 
