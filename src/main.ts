@@ -1,4 +1,4 @@
-import { generateAnyBlockFile } from './anyBlock'
+import { generateAnyBlockFile } from './anyBlock/generate'
 import { Settings } from './cli'
 import { GoogleKeepNote, ingestKeepJsonFiles } from './keep'
 import { ensureDirectoryExists } from './utils'
