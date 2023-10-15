@@ -57,8 +57,8 @@ const convertToAnyBlockPage = (note: GoogleKeepNote, mode: Mode): Page => {
     titleText = note.title || genTitleFromDate(note.createdTimestampUsec)
   }
 
-  const headerBlock = createBlock('Header')
-  const featuredRelationsBlock = createBlock('FeaturedRelations')
+  const headerBlock = createBlock('Header', { objectType })
+  const featuredRelationsBlock = createBlock('FeaturedRelations', undefined)
 
   const textBlocks: BlockWithId[] = note.textContent
     ? note.textContent
@@ -90,8 +90,8 @@ const convertToAnyBlockPage = (note: GoogleKeepNote, mode: Mode): Page => {
   ]
 
   if (objectType === 'page') {
-    const titleBlock = createBlock('Title')
-    const descriptionBlock = createBlock('Description')
+    const titleBlock = createBlock('Title', undefined)
+    const descriptionBlock = createBlock('Description', undefined)
     allBlocks = [...allBlocks, titleBlock, descriptionBlock]
   }
 

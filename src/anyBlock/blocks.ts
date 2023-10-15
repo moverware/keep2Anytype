@@ -8,6 +8,7 @@ import {
   ContentfulConfig,
   HandlerConfig,
   HandlersMap,
+  HeaderConfig,
   ListConfig,
   Mark,
   Marks,
@@ -21,12 +22,16 @@ const createRestrictions = (
   remove = true,
   drag = true,
   dropOn = true
-): Restrictions => ({
-  edit,
-  remove,
-  drag,
-  dropOn,
-})
+): { restrictions: Restrictions } => {
+  const restrictions: Restrictions = {}
+
+  if (edit) restrictions.edit = edit
+  if (remove) restrictions.remove = remove
+  if (drag) restrictions.drag = drag
+  if (dropOn) restrictions.dropOn = dropOn
+
+  return { restrictions }
+}
 
 const generateLinkMarksForText = (
   text: string
@@ -59,12 +64,18 @@ const generateTextContent = (config: ContentfulConfig) => {
 }
 
 // Block Handlers
-const headerBlockHandler: BlockHandler<never> = {
-  prepareContent() {
+const headerBlockHandler: BlockHandler<HeaderConfig> = {
+  prepareContent(config) {
+    const childrenIds = ['featuredRelations']
+    if (config.objectType === 'page') {
+      childrenIds.push('title', 'description')
+    }
+
     return {
       id: 'header',
       ...createRestrictions(true),
       layout: { style: 'Header' },
+      childrenIds,
     }
   },
 }
@@ -152,12 +163,16 @@ const handlers: HandlersMap = {
 
 export const createBlock = <T extends BlockType>(
   type: T,
-  config?: HandlerConfig[T]
+  config: HandlerConfig[T]
 ): BlockWithId => {
-  const id = uuidv4()
+  let id = uuidv4()
   const handler = handlers[type]
 
   const fields = handler.prepareContent(config as HandlerConfig[T])
+
+  if (fields.id) {
+    id = fields.id
+  }
 
   const block: Block = { id, ...fields }
   return { block, id }

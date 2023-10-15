@@ -96,6 +96,10 @@ export interface RelationLink {
 type SpecialBlockType = 'Header' | 'FeaturedRelations' | 'Description' | 'Title'
 export type BlockType = 'Text' | 'List' | 'Annotation' | SpecialBlockType
 
+export interface HeaderConfig {
+  objectType: ObjectType
+}
+
 export interface ContentfulConfig {
   content: string
 }
@@ -109,10 +113,10 @@ export interface AnnotationConfig extends ContentfulConfig {
 }
 
 export type HandlerConfig = {
-  Header: never
-  FeaturedRelations: never
-  Title: never
-  Description: never
+  Header: HeaderConfig
+  FeaturedRelations: undefined
+  Title: undefined
+  Description: undefined
   Text: ContentfulConfig
   List: ListConfig
   Annotation: AnnotationConfig
