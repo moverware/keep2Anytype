@@ -17,7 +17,7 @@ import {
 import { extractUrls } from '../utils'
 
 const createRestrictions = (
-  edit = true,
+  edit = false,
   remove = true,
   drag = true,
   dropOn = true
@@ -26,14 +26,6 @@ const createRestrictions = (
   remove,
   drag,
   dropOn,
-})
-
-const prepareCommonContent = (
-  restrictions: Restrictions,
-  additionalFields: Partial<Block> = {}
-): Partial<Block> => ({
-  restrictions,
-  ...additionalFields,
 })
 
 const generateLinkMarksForText = (
@@ -70,9 +62,9 @@ const generateTextContent = (config: ContentfulConfig) => {
 const headerBlockHandler: BlockHandler<never> = {
   prepareContent() {
     return {
-      ...prepareCommonContent(createRestrictions(), {
-        layout: { style: 'Header' },
-      }),
+      id: 'header',
+      ...createRestrictions(true),
+      layout: { style: 'Header' },
     }
   },
 }
@@ -80,9 +72,9 @@ const headerBlockHandler: BlockHandler<never> = {
 const featuredRelationsBlockHandler: BlockHandler<never> = {
   prepareContent() {
     return {
-      ...prepareCommonContent(createRestrictions(), {
-        featuredRelations: {},
-      }),
+      id: 'featuredRelations',
+      ...createRestrictions(),
+      featuredRelations: {},
     }
   },
 }
@@ -90,10 +82,10 @@ const featuredRelationsBlockHandler: BlockHandler<never> = {
 const descriptionBlockHandler: BlockHandler<never> = {
   prepareContent() {
     return {
-      ...prepareCommonContent(createRestrictions(), {
-        fields: { _detailsKey: 'description' },
-        text: { style: 'Description', marks: {} },
-      }),
+      id: 'description',
+      ...createRestrictions(),
+      fields: { _detailsKey: 'description' },
+      text: { style: 'Description', marks: {} },
     }
   },
 }
@@ -101,16 +93,16 @@ const descriptionBlockHandler: BlockHandler<never> = {
 const titleBlockHandler: BlockHandler<never> = {
   prepareContent() {
     return {
-      ...prepareCommonContent(createRestrictions(), {
-        fields: { _detailsKey: ['name', 'done'] },
-        text: { style: 'Title', marks: {} },
-      }),
+      id: 'title',
+      ...createRestrictions(),
+      fields: { _detailsKey: ['name', 'done'] },
+      text: { style: 'Title', marks: {} },
     }
   },
 }
 
 const textBlockHandler: BlockHandler<ContentfulConfig> = {
-  prepareContent(config): Partial<Block> {
+  prepareContent(config) {
     return {
       text: generateTextContent(config),
     }
@@ -118,7 +110,7 @@ const textBlockHandler: BlockHandler<ContentfulConfig> = {
 }
 
 const listBlockHandler: BlockHandler<ListConfig> = {
-  prepareContent(config): Partial<Block> {
+  prepareContent(config) {
     return {
       text: {
         ...generateTextContent(config),
@@ -130,7 +122,7 @@ const listBlockHandler: BlockHandler<ListConfig> = {
 }
 
 const annotationBlockHandler: BlockHandler<AnnotationConfig> = {
-  prepareContent(config): Partial<Block> {
+  prepareContent(config) {
     return {
       text: {
         text: config.content,
@@ -165,8 +157,8 @@ export const createBlock = <T extends BlockType>(
   const id = uuidv4()
   const handler = handlers[type]
 
-  const specialFields = handler.prepareContent(config as HandlerConfig[T])
+  const fields = handler.prepareContent(config as HandlerConfig[T])
 
-  const block: Block = { id, ...specialFields, ...config }
+  const block: Block = { id, ...fields }
   return { block, id }
 }
