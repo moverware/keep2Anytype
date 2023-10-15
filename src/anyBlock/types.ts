@@ -129,3 +129,12 @@ export type HandlersMap = {
 export interface BlockHandler<T> {
   prepareContent(config: T): Partial<Block>
 }
+
+export interface CreateAnyBlockPageConfig {
+  blocks: Block[]
+  objectType: ObjectType
+  titleText: string
+  createdTimestamp: number
+  editedTimestamp: number
+  sourcePath: string
+}

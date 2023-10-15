@@ -1,6 +1,8 @@
-import { generateAnyBlockFile } from './anyBlock/generate'
+import { convertToAnyBlockPage } from './anyBlock/convert'
+import { writeAnyBlockPageToFile } from './anyBlock/write'
 import { Settings } from './cli'
-import { GoogleKeepNote, ingestKeepJsonFiles } from './keep'
+import { ingestKeepJsonFiles } from './keep/ingest'
+import { GoogleKeepNote } from './keep/types'
 import { ensureDirectoryExists } from './utils'
 
 export const main = async (settings: Settings) => {
@@ -31,7 +33,12 @@ export const main = async (settings: Settings) => {
   await ensureDirectoryExists(outputFolderPath)
   for (const note of notes) {
     try {
-      const filePath = await generateAnyBlockFile(note, outputFolderPath, mode)
+      const anyBlockPage = convertToAnyBlockPage(note, mode)
+      const filePath = await writeAnyBlockPageToFile(
+        anyBlockPage,
+        note.sourceFileName,
+        outputFolderPath
+      )
       console.log(`Successfully generated ${filePath}`)
     } catch (error) {
       console.error(

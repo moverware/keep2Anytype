@@ -1,12 +1,16 @@
-import { writeFile } from 'fs/promises'
-import { GoogleKeepNote } from '../keep'
 import * as dotenv from 'dotenv'
 import { convertMicrosecondsToSeconds, getEnvVar } from '../utils'
-import path from 'path'
 import { Mode } from '../cli'
-import { BlockWithId, ObjectType, Page } from './types'
+import {
+  Block,
+  BlockWithId,
+  CreateAnyBlockPageConfig,
+  ObjectType,
+  Page,
+} from './types'
 import { relationLinks } from './config'
 import { createBlock } from './blocks'
+import { GoogleKeepNote } from '../keep/types'
 dotenv.config()
 
 const genTitleFromDate = (createdTimestampUsec: number) => {
@@ -47,16 +51,10 @@ const getLayoutNumber = (objectType: ObjectType): number => {
   throw new Error(`Invalid object type ${objectType}`)
 }
 
-const convertToAnyBlockPage = (note: GoogleKeepNote, mode: Mode): Page => {
-  const hasTitle = note.title !== undefined && note.title !== ''
-  const objectType = getObjectType(mode, hasTitle)
-  console.log(`Converting ${note.sourceFileName} to ${objectType}`)
-
-  let titleText = ''
-  if (objectType === 'page') {
-    titleText = note.title || genTitleFromDate(note.createdTimestampUsec)
-  }
-
+const createCoreBlocks = (
+  note: GoogleKeepNote,
+  objectType: ObjectType
+): BlockWithId[] => {
   const headerBlock = createBlock('Header', { objectType })
   const featuredRelationsBlock = createBlock('FeaturedRelations', undefined)
 
@@ -81,7 +79,7 @@ const convertToAnyBlockPage = (note: GoogleKeepNote, mode: Mode): Page => {
       )
     : []
 
-  let allBlocks = [
+  let allBlocks: BlockWithId[] = [
     headerBlock,
     ...textBlocks,
     ...listBlocks,
@@ -95,8 +93,16 @@ const convertToAnyBlockPage = (note: GoogleKeepNote, mode: Mode): Page => {
     allBlocks = [...allBlocks, titleBlock, descriptionBlock]
   }
 
-  const nonChildrenIds = ['title', 'description', 'featuredRelations']
+  return allBlocks
+}
 
+const createBlocks = (
+  note: GoogleKeepNote,
+  objectType: ObjectType
+): Block[] => {
+  const allBlocks = createCoreBlocks(note, objectType)
+
+  const nonChildrenIds = ['title', 'description', 'featuredRelations']
   const blocks = allBlocks.map((blockWithId) => blockWithId.block)
   const childrenIds = allBlocks
     .filter((blockWithId) => !nonChildrenIds.includes(blockWithId.block.id))
@@ -109,7 +115,18 @@ const convertToAnyBlockPage = (note: GoogleKeepNote, mode: Mode): Page => {
     smartblock: {},
   }
 
-  const completeBlocks = [mainBlock, ...blocks]
+  return [mainBlock, ...blocks]
+}
+
+const createAnyBlockPage = (config: CreateAnyBlockPageConfig): Page => {
+  const {
+    blocks,
+    titleText,
+    createdTimestamp,
+    editedTimestamp,
+    objectType,
+    sourcePath,
+  } = config
 
   const tagId = getEnvVar('TAG_ID', '')
   const tag = tagId ? [tagId] : []
@@ -123,28 +140,24 @@ const convertToAnyBlockPage = (note: GoogleKeepNote, mode: Mode): Page => {
     sbType: 'Page',
     snapshot: {
       data: {
-        blocks: completeBlocks,
+        blocks,
         details: {
           backlinks: [],
-          createdDate: convertMicrosecondsToSeconds(note.createdTimestampUsec),
+          createdDate: convertMicrosecondsToSeconds(createdTimestamp),
           creator: '',
           description: '',
           featuredRelations,
           iconEmoji: '',
           id: '',
           lastModifiedBy: '',
-          lastModifiedDate: convertMicrosecondsToSeconds(
-            note.userEditedTimestampUsec
-          ),
-          lastOpenedDate: convertMicrosecondsToSeconds(
-            note.userEditedTimestampUsec
-          ),
+          lastModifiedDate: convertMicrosecondsToSeconds(editedTimestamp),
+          lastOpenedDate: convertMicrosecondsToSeconds(editedTimestamp),
           layout: getLayoutNumber(objectType),
           links: [],
           name: titleText,
           restrictions: [],
           snippet: '',
-          sourceFilePath: note.sourceFilePath,
+          sourceFilePath: sourcePath,
           tag,
           type: getObjectTypeString(objectType),
           workspaceId: '',
@@ -156,14 +169,26 @@ const convertToAnyBlockPage = (note: GoogleKeepNote, mode: Mode): Page => {
   }
 }
 
-export const generateAnyBlockFile = async (
+export const convertToAnyBlockPage = (
   note: GoogleKeepNote,
-  outputFolder: string,
   mode: Mode
-) => {
-  const filePath = path.resolve(outputFolder, `${note.sourceFileName}.json`)
-  const anyBlockPage = convertToAnyBlockPage(note, mode)
-  const serializedData = JSON.stringify(anyBlockPage, null, 2)
-  await writeFile(filePath, serializedData)
-  return filePath
+): Page => {
+  const hasTitle = note.title !== undefined && note.title !== ''
+  const objectType = getObjectType(mode, hasTitle)
+
+  let titleText = ''
+  if (objectType === 'page') {
+    titleText = note.title || genTitleFromDate(note.createdTimestampUsec)
+  }
+
+  const blocks = createBlocks(note, objectType)
+
+  return createAnyBlockPage({
+    blocks,
+    titleText,
+    createdTimestamp: note.createdTimestampUsec,
+    editedTimestamp: note.userEditedTimestampUsec,
+    objectType,
+    sourcePath: note.sourceFilePath,
+  })
 }
