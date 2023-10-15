@@ -31,6 +31,8 @@ export const main = async (settings: Settings) => {
   }
 
   await ensureDirectoryExists(outputFolderPath)
+  const errors: string[] = []
+
   for (const note of notes) {
     try {
       const anyBlockPage = convertToAnyBlockPage(note, mode)
@@ -41,11 +43,21 @@ export const main = async (settings: Settings) => {
       )
       console.log(`Successfully generated ${filePath}`)
     } catch (error) {
-      console.error(
-        `Error writing any-block for keep file ${note.sourceFilePath}`,
-        error
-      )
-      process.exit(1)
+      if (error instanceof Error) {
+        errors.push(
+          `Error writing any-block for keep file ${note.sourceFilePath}`,
+          error.message
+        )
+      } else {
+        errors.push(
+          `Error writing any-block for keep file ${note.sourceFilePath}`,
+          'An unknown error occurred'
+        )
+      }
     }
+  }
+
+  for (const error of errors) {
+    console.error(error)
   }
 }
