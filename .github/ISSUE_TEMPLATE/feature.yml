@@ -1,0 +1,11 @@
+name: Feature request
+description: Convert something new from Keep, or change how notes are converted
+labels: [enhancement]
+body:
+  - type: textarea
+    id: request
+    attributes:
+      label: What you'd like
+      description: What Keep data should be converted, and how it should look in Anytype.
+    validations:
+      required: true

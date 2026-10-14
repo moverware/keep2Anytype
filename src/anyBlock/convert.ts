@@ -1,17 +1,24 @@
-import * as dotenv from "dotenv";
-import { Mode } from "../cli";
-import { GoogleKeepNote } from "../keep/types";
-import { convertMicrosecondsToSeconds, getEnvVar } from "../utils";
+import type { GoogleKeepNote } from "../keep/types";
+import type { Mode } from "../main";
+import { convertMicrosecondsToSeconds } from "../utils";
 import { createBlock } from "./blocks";
 import { relationLinks } from "./config";
-import {
+import type {
   Block,
   BlockWithId,
   CreateAnyBlockPageConfig,
   ObjectType,
   Page,
 } from "./types";
-dotenv.config();
+
+export interface ConvertOptions {
+  mode: Mode;
+  emoji: string;
+  includeMetadata: boolean;
+  includeRelation: boolean;
+  // Anytype tag object id applied to every converted note; empty for none.
+  tagId: string;
+}
 
 const genTitleFromDate = (createdTimestampUsec: number) => {
   return new Date(createdTimestampUsec / 1000).toLocaleString("en-US", {
@@ -54,7 +61,7 @@ const getLayoutNumber = (objectType: ObjectType): number => {
 const createCoreBlocks = (
   note: GoogleKeepNote,
   objectType: ObjectType,
-  includeDescriptionRelation: boolean
+  includeDescriptionRelation: boolean,
 ): BlockWithId[] => {
   const headerBlock = createBlock("Header", { objectType });
   const featuredRelationsBlock = createBlock("FeaturedRelations", undefined);
@@ -64,7 +71,7 @@ const createCoreBlocks = (
     descriptionRelationBlock.push(
       createBlock("Relation", {
         relationKey: "description",
-      })
+      }),
     );
   }
 
@@ -76,7 +83,7 @@ const createCoreBlocks = (
 
   const listBlocks: BlockWithId[] = note.listContent
     ? note.listContent.map((item) =>
-        createBlock("List", { checked: item.isChecked, content: item.text })
+        createBlock("List", { checked: item.isChecked, content: item.text }),
       )
     : [];
 
@@ -85,7 +92,7 @@ const createCoreBlocks = (
         createBlock("Annotation", {
           url: annotation.url,
           content: annotation.title,
-        })
+        }),
       )
     : [];
 
@@ -110,12 +117,12 @@ const createCoreBlocks = (
 const createBlocks = (
   note: GoogleKeepNote,
   objectType: ObjectType,
-  includeDescriptionRelation: boolean
+  includeDescriptionRelation: boolean,
 ): Block[] => {
   const allBlocks = createCoreBlocks(
     note,
     objectType,
-    includeDescriptionRelation
+    includeDescriptionRelation,
   );
 
   const nonChildrenIds = ["title", "description", "featuredRelations"];
@@ -144,9 +151,9 @@ const createAnyBlockPage = (config: CreateAnyBlockPageConfig): Page => {
     sourcePath,
     description,
     emoji,
+    tagId,
   } = config;
 
-  const tagId = getEnvVar("TAG_ID", "");
   const tag = tagId ? [tagId] : [];
 
   let featuredRelations = ["type"];
@@ -163,7 +170,7 @@ const createAnyBlockPage = (config: CreateAnyBlockPageConfig): Page => {
           backlinks: [],
           createdDate: convertMicrosecondsToSeconds(createdTimestamp),
           creator: "",
-          description: description,
+          description,
           featuredRelations,
           iconEmoji: emoji,
           id: "",
@@ -189,11 +196,9 @@ const createAnyBlockPage = (config: CreateAnyBlockPageConfig): Page => {
 
 export const convertToAnyBlockPage = (
   note: GoogleKeepNote,
-  mode: Mode,
-  emoji: string,
-  includeMetadata: boolean,
-  includeRelation: boolean
+  options: ConvertOptions,
 ): Page => {
+  const { mode, emoji, includeMetadata, includeRelation, tagId } = options;
   const hasTitle = note.title !== undefined && note.title !== "";
   const objectType = getObjectType(mode, hasTitle);
 
@@ -219,7 +224,7 @@ export const convertToAnyBlockPage = (
     }
     if (note.labels) {
       descriptionArray.push(
-        `Labels: ${note.labels.map((label) => label.name).join(", ")}`
+        `Labels: ${note.labels.map((label) => label.name).join(", ")}`,
       );
     }
 
@@ -229,7 +234,7 @@ export const convertToAnyBlockPage = (
   const blocks = createBlocks(
     note,
     objectType,
-    includeMetadata && includeRelation
+    includeMetadata && includeRelation,
   );
 
   return createAnyBlockPage({
@@ -241,5 +246,6 @@ export const convertToAnyBlockPage = (
     sourcePath: note.sourceFilePath,
     description,
     emoji,
+    tagId,
   });
 };

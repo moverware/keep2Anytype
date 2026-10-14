@@ -1,10 +1,10 @@
-import { promises as fs } from "fs";
-import path from "path";
-import { GoogleKeepNote } from "./types";
+import { promises as fs } from "node:fs";
+import path from "node:path";
+import type { GoogleKeepNote } from "./types";
 
 const parseGoogleKeepNote = (
   jsonString: string,
-  filePath: string
+  filePath: string,
 ): GoogleKeepNote => {
   const parsedObject = JSON.parse(jsonString);
   if (!isGoogleKeepNote(parsedObject)) {
@@ -99,7 +99,7 @@ const isGoogleKeepNote = (object: any): object is GoogleKeepNote => {
 export const ingestKeepJsonFiles = async (
   folderPath: string,
   includeArchive: boolean,
-  includeTrashed: boolean
+  includeTrashed: boolean,
 ): Promise<GoogleKeepNote[]> => {
   const notes: GoogleKeepNote[] = [];
   const files = await fs.readdir(folderPath);
@@ -120,7 +120,8 @@ export const ingestKeepJsonFiles = async (
         notes.push(note);
       } catch (error: any) {
         throw new Error(
-          `Failed to parse ${filePath} into a GoogleKeepNote: ${error.message}`
+          `Failed to parse ${filePath} into a GoogleKeepNote: ${error.message}`,
+          { cause: error },
         );
       }
     }

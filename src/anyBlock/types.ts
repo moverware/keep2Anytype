@@ -97,16 +97,9 @@ export interface RelationLink {
 }
 
 type SpecialBlockType =
-  | "Header"
-  | "FeaturedRelations"
-  | "Description"
-  | "Title";
+  "Header" | "FeaturedRelations" | "Description" | "Title";
 export type BlockType =
-  | "Text"
-  | "List"
-  | "Annotation"
-  | "Relation"
-  | SpecialBlockType;
+  "Text" | "List" | "Annotation" | "Relation" | SpecialBlockType;
 
 export interface HeaderConfig {
   objectType: ObjectType;
@@ -156,4 +149,5 @@ export interface CreateAnyBlockPageConfig {
   sourcePath: string;
   description: string;
   emoji: string;
+  tagId: string;
 }

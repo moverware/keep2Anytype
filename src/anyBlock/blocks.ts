@@ -1,5 +1,5 @@
-import { v4 as uuidv4 } from "uuid";
-import {
+import { randomUUID } from "node:crypto";
+import type {
   AnnotationConfig,
   Block,
   BlockHandler,
@@ -22,7 +22,7 @@ const createRestrictions = (
   edit = false,
   remove = true,
   drag = true,
-  dropOn = true
+  dropOn = true,
 ): { restrictions: Restrictions } => {
   const restrictions: Restrictions = {};
 
@@ -35,7 +35,7 @@ const createRestrictions = (
 };
 
 const generateLinkMarksForText = (
-  text: string
+  text: string,
 ): Marks | Record<string, never> => {
   const marks: Mark[] = [];
   const urls = extractUrls(text);
@@ -175,17 +175,11 @@ const handlers: HandlersMap = {
 
 export const createBlock = <T extends BlockType>(
   type: T,
-  config: HandlerConfig[T]
+  config: HandlerConfig[T],
 ): BlockWithId => {
-  let id = uuidv4();
   const handler = handlers[type];
-
   const fields = handler.prepareContent(config as HandlerConfig[T]);
-
-  if (fields.id) {
-    id = fields.id;
-  }
-
+  const id = fields.id ?? randomUUID();
   const block: Block = { id, ...fields };
   return { block, id };
 };

@@ -1,0 +1,29 @@
+name: Bug report
+description: The conversion or the Anytype import doesn't work as expected
+labels: [bug]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you expected, and what you got instead. Include any error output.
+    validations:
+      required: true
+  - type: input
+    id: command
+    attributes:
+      label: Command
+      placeholder: npm run cli -- -p ~/Takeout/Keep -o ~/out -d
+    validations:
+      required: true
+  - type: textarea
+    id: sample
+    attributes:
+      label: Sample Keep note
+      description: If one note triggers the problem, paste its JSON from the Takeout folder with any personal content replaced.
+      render: json
+  - type: input
+    id: versions
+    attributes:
+      label: Anytype version, Node.js version and OS
+      placeholder: Anytype 0.50.0, Node 24.10, macOS 26

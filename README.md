@@ -1,52 +1,62 @@
-# CLI tool for converting Google Keep exports to any-block objects for Anytype
+# keep2Anytype
+
+A command-line tool that converts a Google Keep export into Any-Block files you can bulk import into [Anytype](https://anytype.io).
 
 ## Setup
 
-Run: `yarn` to install dependencies.
+You need Node.js 22 or newer. With [nvm](https://github.com/nvm-sh/nvm), `nvm use` picks up the version in `.nvmrc`.
 
-Optional: create a tag in anytype and set `TAG_ID` in `.env` to the tag id.
-This will tag all converted notes with the given tag.
-You can find the tag id by exporting an anytype object with the tag as `Any-Block` type and looking at the `tags` field in the exported json.
+```sh
+git clone https://github.com/moverware/keep2Anytype.git
+cd keep2Anytype
+npm install
+```
 
-Export your Google Keep data from [Google Takeout](https://takeout.google.com/settings/takeout) and unzip it.
+Export your Keep data from [Google Takeout](https://takeout.google.com/settings/takeout) and unzip it.
+
+To tag every converted note, create a tag in Anytype, copy `.env.sample` to `.env` and set `TAG_ID` to the tag's id. You can find the id by exporting an Anytype object that has the tag as `Any-Block` and reading the `tag` field in the exported JSON.
 
 ## Usage
 
-Run:
-`yarn cli -p <path-to-keep-folder>/Takeout/Keep/ -o <output-folder>`
+```sh
+npm run cli -- -p <path-to-takeout>/Takeout/Keep -o <output-folder>
+```
 
-## CLI Options
+The `--` passes the flags through npm to the tool.
 
-- `-p` or `--path` - Path to the Google Keep folder
-- `-o` or `--output` - Path to the output folder (will be created if it doesn't exist and must be different from the input folder)
-- `-a` or `--archive` - Whether to include archived notes. Defaults to `false`.
-- `-t` or `--trash` - Whether to include trashed notes. Defaults to `false`.
-- `-m` or `--mode` - Mode for conversion. Can be `pages` or `mixed`. Defaults to `mixed`. `mixed` mode will convert Keep notes with titles to Anytype `page` and Keep notes without titles to Anytype `note`. `pages` mode will convert all Keep notes to Anytype `page`, and will use the created date as the title if the Keep note does not have a title.
-- `-e` or `--emoji` - The emoji to use for the Anytype object. Defaults to nothing.
-- `-d` or `--metadata` - Whether to include additional metadata from Google Keep. Defaults to `false`. Refer to Notes for more information.
-- `-r` or `--relation` - Include the description relation as a block in the Anytype object. Defaults to `false`.
+| Flag               | Default | Effect                                                                                                                                                                                                      |
+| ------------------ | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `-p`, `--path`     |         | Google Keep export folder (required)                                                                                                                                                                        |
+| `-o`, `--output`   |         | Folder to write the Any-Block files to. Created if missing; must differ from `--path` (required)                                                                                                            |
+| `-m`, `--mode`     | `mixed` | `mixed` turns titled notes into Anytype pages and untitled notes into Anytype notes. `pages` turns every note into a page, titling untitled notes with their created date                                   |
+| `-a`, `--archive`  | off     | Include archived notes                                                                                                                                                                                      |
+| `-t`, `--trashed`  | off     | Include trashed notes                                                                                                                                                                                       |
+| `-e`, `--emoji`    | none    | Icon emoji for every converted object                                                                                                                                                                       |
+| `-d`, `--metadata` | off     | Write Keep metadata to the object's description: the note colour (unless default), whether it was pinned, archived or trashed, and its labels. For example `Color: YELLOW \| Pinned \| Labels: work, ideas` |
+| `-r`, `--relation` | off     | Also show the description in the body of the object. Only has an effect with `--metadata`                                                                                                                   |
 
-## Import
+In Anytype, choose **File > Import > Any-Block** and select the output folder.
 
-In anytype, select `file -> import` then `Any-Block` and select the output folder to bulk import.
-
-## Notes
-
-- You should try importing into a blank space first to see if the conversion works as expected.
-- Does not import Google Keep images
-- Modifies the created and modified dates to match the Google Keep note
-- If the Keep note does not have a title, it uses the created date as the title
-- Automatically parses any hyperlinks or annotations
-- Metadata will be included in the description if the `metadata` flag is set to `true`. This metadata includes:
-  - `Color` - The colour of the note if it's not DEFAULT
-  - `IsPinned` - Whether the note is pinned
-  - `IsArchived` - Whether the note is archived
-  - `IsTrashed` - Whether the note is in the trash
-  - `Labels` - The labels attached to the note
+Try the import in an empty space first to check the result before importing into your main space.
 
 ## Example
 
-`yarn cli -p <path-to-keep-folder>/Takeout/Keep -o <output-folder> -a -t -d -r -m pages -e 🗒️`
+```sh
+npm run cli -- -p ~/Downloads/Takeout/Keep -o ~/Downloads/anytype-import -a -t -d -r -m pages -e 🗒️
+```
 
-In this example, the command above was run. This includes all archived notes and adds the labels and colours of the notes in the Description relation. The creation dates also match the original Google Keep notes.
-![image](img/example-import.png)
+This converts every note, including archived and trashed ones, into pages with a notepad icon. Each page keeps its Keep created date and shows its labels and colour in the description.
+
+![Notes imported into Anytype](img/example-import.png)
+
+## What gets converted
+
+- Text, checklists (with their checked state), and links. URLs in text become links.
+- Created and last-edited dates.
+- Colour, pinned/archived/trashed state and labels, as description text with `--metadata`. Labels don't become Anytype tags.
+
+Images and other attachments are not converted yet ([#2](https://github.com/moverware/keep2Anytype/issues/2)).
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md).

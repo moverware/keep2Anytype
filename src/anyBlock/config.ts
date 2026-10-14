@@ -1,4 +1,4 @@
-import { RelationLink } from "./types";
+import type { RelationLink } from "./types";
 
 export const relationLinks: RelationLink[] = [
   {
