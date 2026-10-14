@@ -30,7 +30,19 @@ export interface Block {
   relation?: {
     key: string;
   };
+  file?: FileContent;
 }
+
+// Anytype uploads a file block's `name` from the local filesystem during
+// import when the block has no hash or target object yet.
+export interface FileContent {
+  name: string;
+  type: FileType;
+  mime: string;
+  state: "Empty";
+}
+
+export type FileType = "File" | "Image" | "Video" | "Audio" | "PDF";
 
 export interface Restrictions {
   edit?: boolean;
@@ -99,7 +111,7 @@ export interface RelationLink {
 type SpecialBlockType =
   "Header" | "FeaturedRelations" | "Description" | "Title";
 export type BlockType =
-  "Text" | "List" | "Annotation" | "Relation" | SpecialBlockType;
+  "Text" | "List" | "Annotation" | "Relation" | "File" | SpecialBlockType;
 
 export interface HeaderConfig {
   objectType: ObjectType;
@@ -117,6 +129,11 @@ export interface ListConfig extends ContentfulConfig {
   checked: boolean;
 }
 
+export interface FileConfig {
+  path: string;
+  mimetype: string;
+}
+
 export interface AnnotationConfig extends ContentfulConfig {
   url: string;
 }
@@ -129,6 +146,7 @@ export type HandlerConfig = {
   Text: ContentfulConfig;
   List: ListConfig;
   Annotation: AnnotationConfig;
+  File: FileConfig;
   Relation: RelationConfig;
 };
 

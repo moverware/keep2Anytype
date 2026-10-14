@@ -10,7 +10,7 @@ export interface Annotation {
   url: string;
 }
 
-interface Attachment {
+export interface Attachment {
   filePath: string;
   mimetype: string;
 }

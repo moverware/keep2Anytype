@@ -39,6 +39,8 @@ In Anytype, choose **File > Import > Any-Block** and select the output folder.
 
 Try the import in an empty space first to check the result before importing into your main space.
 
+Anytype copies images and other attachments from your Takeout folder during the import, so import on the same computer and leave the Takeout folder where it was when you ran the conversion.
+
 ## Example
 
 ```sh
@@ -52,10 +54,9 @@ This converts every note, including archived and trashed ones, into pages with a
 ## What gets converted
 
 - Text, checklists (with their checked state), and links. URLs in text become links.
+- Images, audio recordings and other attachments, placed above the note text as they are in Keep.
 - Created and last-edited dates.
 - Colour, pinned/archived/trashed state and labels, as description text with `--metadata`. Labels don't become Anytype tags.
-
-Images and other attachments are not converted yet ([#2](https://github.com/moverware/keep2Anytype/issues/2)).
 
 ## Contributing
 

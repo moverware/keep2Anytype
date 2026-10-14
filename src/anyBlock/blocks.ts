@@ -1,6 +1,8 @@
 import { randomUUID } from "node:crypto";
 import type {
   AnnotationConfig,
+  FileConfig,
+  FileType,
   Block,
   BlockHandler,
   BlockType,
@@ -143,6 +145,27 @@ const listBlockHandler: BlockHandler<ListConfig> = {
   },
 };
 
+const fileTypeForMimetype = (mimetype: string): FileType => {
+  if (mimetype.startsWith("image/")) return "Image";
+  if (mimetype.startsWith("video/")) return "Video";
+  if (mimetype.startsWith("audio/")) return "Audio";
+  if (mimetype === "application/pdf") return "PDF";
+  return "File";
+};
+
+const fileBlockHandler: BlockHandler<FileConfig> = {
+  prepareContent(config) {
+    return {
+      file: {
+        name: config.path,
+        type: fileTypeForMimetype(config.mimetype),
+        mime: config.mimetype,
+        state: "Empty",
+      },
+    };
+  },
+};
+
 const annotationBlockHandler: BlockHandler<AnnotationConfig> = {
   prepareContent(config) {
     return {
@@ -166,6 +189,7 @@ const handlers: HandlersMap = {
   Text: textBlockHandler,
   List: listBlockHandler,
   Annotation: annotationBlockHandler,
+  File: fileBlockHandler,
   Header: headerBlockHandler,
   FeaturedRelations: featuredRelationsBlockHandler,
   Description: descriptionBlockHandler,
