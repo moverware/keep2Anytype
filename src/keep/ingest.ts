@@ -1,115 +1,130 @@
-import { promises as fs } from 'fs'
-import path from 'path'
-import { GoogleKeepNote } from './types'
+import { promises as fs } from "fs";
+import path from "path";
+import { GoogleKeepNote } from "./types";
 
 const parseGoogleKeepNote = (
   jsonString: string,
   filePath: string
 ): GoogleKeepNote => {
-  const parsedObject = JSON.parse(jsonString)
+  const parsedObject = JSON.parse(jsonString);
   if (!isGoogleKeepNote(parsedObject)) {
-    throw new Error('Invalid data structure for a GoogleKeepNote')
+    throw new Error("Invalid data structure for a GoogleKeepNote");
   }
   return {
     ...parsedObject,
     sourceFilePath: filePath,
     sourceFileName: path.parse(filePath).name,
-  }
-}
+  };
+};
 
 const isGoogleKeepNote = (object: any): object is GoogleKeepNote => {
   const baseFields = [
-    'color',
-    'isTrashed',
-    'isPinned',
-    'isArchived',
-    'title',
-    'userEditedTimestampUsec',
-    'createdTimestampUsec',
-  ]
+    "color",
+    "isTrashed",
+    "isPinned",
+    "isArchived",
+    "title",
+    "userEditedTimestampUsec",
+    "createdTimestampUsec",
+  ];
 
   for (const field of baseFields) {
     if (!(field in object)) {
-      throw new Error(`Missing field: ${field}`)
+      throw new Error(`Missing field: ${field}`);
     }
   }
 
   if (object.listContent) {
     if (!Array.isArray(object.listContent)) {
-      throw new Error('listContent is not an array')
+      throw new Error("listContent is not an array");
     }
     for (const item of object.listContent) {
       if (
-        typeof item.text !== 'string' ||
-        typeof item.isChecked !== 'boolean'
+        typeof item.text !== "string" ||
+        typeof item.isChecked !== "boolean"
       ) {
-        throw new Error('Invalid listContent item')
+        throw new Error("Invalid listContent item");
       }
     }
   }
 
-  if (object.textContent && typeof object.textContent !== 'string') {
-    throw new Error('Invalid textContent')
+  if (object.textContent && typeof object.textContent !== "string") {
+    throw new Error("Invalid textContent");
   }
 
   if (object.annotations) {
     if (!Array.isArray(object.annotations)) {
-      throw new Error('annotations is not an array')
+      throw new Error("annotations is not an array");
     }
     for (const annotation of object.annotations) {
       if (
-        typeof annotation.description !== 'string' ||
-        typeof annotation.source !== 'string' ||
-        typeof annotation.title !== 'string' ||
-        typeof annotation.url !== 'string'
+        typeof annotation.description !== "string" ||
+        typeof annotation.source !== "string" ||
+        typeof annotation.title !== "string" ||
+        typeof annotation.url !== "string"
       ) {
-        throw new Error('Invalid annotation item')
+        throw new Error("Invalid annotation item");
       }
     }
   }
 
   if (object.attachments) {
     if (!Array.isArray(object.attachments)) {
-      throw new Error('attachments is not an array')
+      throw new Error("attachments is not an array");
     }
     for (const attachment of object.attachments) {
       if (
-        typeof attachment.filePath !== 'string' ||
-        typeof attachment.mimetype !== 'string'
+        typeof attachment.filePath !== "string" ||
+        typeof attachment.mimetype !== "string"
       ) {
-        throw new Error('Invalid attachment item')
+        throw new Error("Invalid attachment item");
       }
     }
   }
 
-  return true
-}
+  if (object.labels) {
+    if (!Array.isArray(object.labels)) {
+      throw new Error("labels is not an array");
+    }
+    for (const label of object.labels) {
+      if (typeof label.name !== "string") {
+        throw new Error("Invalid label item");
+      }
+    }
+  }
+
+  return true;
+};
 
 export const ingestKeepJsonFiles = async (
   folderPath: string,
-  includeArchive: boolean
+  includeArchive: boolean,
+  includeTrashed: boolean
 ): Promise<GoogleKeepNote[]> => {
-  const notes: GoogleKeepNote[] = []
-  const files = await fs.readdir(folderPath)
+  const notes: GoogleKeepNote[] = [];
+  const files = await fs.readdir(folderPath);
 
   for (const file of files) {
-    if (path.extname(file) === '.json') {
-      const filePath = path.join(folderPath, file)
+    if (path.extname(file) === ".json") {
+      const filePath = path.join(folderPath, file);
 
       try {
-        const data = await fs.readFile(filePath, 'utf8')
-        const note = parseGoogleKeepNote(data, filePath)
+        const data = await fs.readFile(filePath, "utf8");
+        const note = parseGoogleKeepNote(data, filePath);
         if (note.isArchived && !includeArchive) {
-          continue
+          continue;
         }
-        notes.push(note)
+        if (note.isTrashed && !includeTrashed) {
+          continue;
+        }
+        notes.push(note);
       } catch (error: any) {
         throw new Error(
           `Failed to parse ${filePath} into a GoogleKeepNote: ${error.message}`
-        )
+        );
       }
     }
   }
 
-  return notes
-}
+  return notes;
+};

@@ -1,108 +1,108 @@
-import { RelationLink } from './types'
+import { RelationLink } from "./types";
 
 export const relationLinks: RelationLink[] = [
   {
-    key: 'id',
-    format: 'object',
+    key: "id",
+    format: "object",
   },
   {
-    key: 'type',
-    format: 'object',
+    key: "type",
+    format: "object",
   },
   {
-    key: 'snippet',
+    key: "snippet",
   },
   {
-    key: 'lastModifiedDate',
-    format: 'date',
+    key: "lastModifiedDate",
+    format: "date",
   },
   {
-    key: 'lastModifiedBy',
-    format: 'object',
+    key: "lastModifiedBy",
+    format: "object",
   },
   {
-    key: 'sourceFilePath',
+    key: "sourceFilePath",
   },
   {
-    key: 'iconEmoji',
-    format: 'emoji',
+    key: "iconEmoji",
+    format: "emoji",
   },
   {
-    key: 'layout',
-    format: 'number',
+    key: "layout",
+    format: "number",
   },
   {
-    key: 'name',
-    format: 'shorttext',
+    key: "name",
+    format: "shorttext",
   },
   {
-    key: 'workspaceId',
-    format: 'object',
+    key: "workspaceId",
+    format: "object",
   },
   {
-    key: 'backlinks',
-    format: 'object',
+    key: "backlinks",
+    format: "object",
   },
   {
-    key: 'creator',
-    format: 'object',
+    key: "creator",
+    format: "object",
   },
   {
-    key: 'createdDate',
-    format: 'date',
+    key: "createdDate",
+    format: "date",
   },
   {
-    key: 'description',
+    key: "description",
   },
   {
-    key: 'iconImage',
-    format: 'file',
+    key: "iconImage",
+    format: "file",
   },
   {
-    key: 'layoutAlign',
-    format: 'number',
+    key: "layoutAlign",
+    format: "number",
   },
   {
-    key: 'coverId',
+    key: "coverId",
   },
   {
-    key: 'coverScale',
-    format: 'number',
+    key: "coverScale",
+    format: "number",
   },
   {
-    key: 'coverType',
-    format: 'number',
+    key: "coverType",
+    format: "number",
   },
   {
-    key: 'coverX',
-    format: 'number',
+    key: "coverX",
+    format: "number",
   },
   {
-    key: 'coverY',
-    format: 'number',
+    key: "coverY",
+    format: "number",
   },
   {
-    key: 'lastOpenedDate',
-    format: 'date',
+    key: "lastOpenedDate",
+    format: "date",
   },
   {
-    key: 'featuredRelations',
-    format: 'object',
+    key: "featuredRelations",
+    format: "object",
   },
   {
-    key: 'isFavorite',
-    format: 'checkbox',
+    key: "isFavorite",
+    format: "checkbox",
   },
   {
-    key: 'links',
-    format: 'object',
+    key: "links",
+    format: "object",
   },
   {
-    key: 'internalFlags',
-    format: 'number',
+    key: "internalFlags",
+    format: "number",
   },
   {
-    key: 'restrictions',
-    format: 'number',
+    key: "restrictions",
+    format: "number",
   },
-]
+];

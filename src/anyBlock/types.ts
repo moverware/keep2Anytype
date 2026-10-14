@@ -1,140 +1,159 @@
-export type ObjectType = 'page' | 'note'
+export type ObjectType = "page" | "note";
 
-export type BlockWithId = { block: Block; id: string }
+export type BlockWithId = { block: Block; id: string };
 
 export interface Page {
-  sbType: 'Page'
-  snapshot: Snapshot
+  sbType: "Page";
+  snapshot: Snapshot;
 }
 
 interface Snapshot {
-  data: Data
+  data: Data;
 }
 
 interface Data {
-  blocks: Block[]
-  details: Details
-  objectTypes: string[]
-  relationLinks: RelationLink[]
+  blocks: Block[];
+  details: Details;
+  objectTypes: string[];
+  relationLinks: RelationLink[];
 }
 
 export interface Block {
-  id: string
-  restrictions?: Restrictions
-  childrenIds?: string[]
-  layout?: Layout
-  text?: Text
-  fields?: Fields
-  featuredRelations?: any
-  smartblock?: any
+  id: string;
+  restrictions?: Restrictions;
+  childrenIds?: string[];
+  layout?: Layout;
+  text?: Text;
+  fields?: Fields;
+  featuredRelations?: any;
+  smartblock?: any;
+  relation?: {
+    key: string;
+  };
 }
 
 export interface Restrictions {
-  edit?: boolean
-  remove?: boolean
-  drag?: boolean
-  dropOn?: boolean
+  edit?: boolean;
+  remove?: boolean;
+  drag?: boolean;
+  dropOn?: boolean;
 }
 
 export interface Layout {
-  style: string
+  style: string;
 }
 
 export interface Range {
-  to: number
-  from?: number
+  to: number;
+  from?: number;
 }
 
 export interface Mark {
-  range: Range
-  type: string
-  param?: string
+  range: Range;
+  type: string;
+  param?: string;
 }
 
 export interface Marks {
-  marks?: Mark[]
+  marks?: Mark[];
 }
 
 export interface Text {
-  text?: string
-  style?: string
-  marks?: Marks
-  checked?: boolean
+  text?: string;
+  style?: string;
+  marks?: Marks;
+  checked?: boolean;
 }
 
 export interface Fields {
-  _detailsKey?: string[] | string
+  _detailsKey?: string[] | string;
 }
 
 interface Details {
-  backlinks: any[]
-  createdDate: number
-  creator: string
-  description: string
-  featuredRelations: string[]
-  iconEmoji: string
-  id: string
-  lastModifiedBy: string
-  lastModifiedDate: number
-  lastOpenedDate: number
-  layout: number
-  links: any[]
-  name: string
-  restrictions: any[]
-  snippet: string
-  sourceFilePath: string
-  tag: string[]
-  type: string
-  workspaceId: string
+  backlinks: any[];
+  createdDate: number;
+  creator: string;
+  description: string;
+  featuredRelations: string[];
+  iconEmoji: string;
+  id: string;
+  lastModifiedBy: string;
+  lastModifiedDate: number;
+  lastOpenedDate: number;
+  layout: number;
+  links: any[];
+  name: string;
+  restrictions: any[];
+  snippet: string;
+  sourceFilePath: string;
+  tag: string[];
+  type: string;
+  workspaceId: string;
 }
 
 export interface RelationLink {
-  key: string
-  format?: string
+  key: string;
+  format?: string;
 }
 
-type SpecialBlockType = 'Header' | 'FeaturedRelations' | 'Description' | 'Title'
-export type BlockType = 'Text' | 'List' | 'Annotation' | SpecialBlockType
+type SpecialBlockType =
+  | "Header"
+  | "FeaturedRelations"
+  | "Description"
+  | "Title";
+export type BlockType =
+  | "Text"
+  | "List"
+  | "Annotation"
+  | "Relation"
+  | SpecialBlockType;
 
 export interface HeaderConfig {
-  objectType: ObjectType
+  objectType: ObjectType;
 }
 
 export interface ContentfulConfig {
-  content: string
+  content: string;
+}
+
+export interface RelationConfig {
+  relationKey: string;
 }
 
 export interface ListConfig extends ContentfulConfig {
-  checked: boolean
+  checked: boolean;
 }
 
 export interface AnnotationConfig extends ContentfulConfig {
-  url: string
+  url: string;
 }
 
 export type HandlerConfig = {
-  Header: HeaderConfig
-  FeaturedRelations: undefined
-  Title: undefined
-  Description: undefined
-  Text: ContentfulConfig
-  List: ListConfig
-  Annotation: AnnotationConfig
-}
+  Header: HeaderConfig;
+  FeaturedRelations: undefined;
+  Title: undefined;
+  Description: undefined;
+  Text: ContentfulConfig;
+  List: ListConfig;
+  Annotation: AnnotationConfig;
+  Relation: RelationConfig;
+};
 
 export type HandlersMap = {
-  [K in BlockType]: BlockHandler<HandlerConfig[K]>
-}
+  [K in BlockType]: BlockHandler<HandlerConfig[K]>;
+};
 
 export interface BlockHandler<T> {
-  prepareContent(config: T): Partial<Block>
+  prepareContent(config: T): Partial<Block>;
 }
 
 export interface CreateAnyBlockPageConfig {
-  blocks: Block[]
-  objectType: ObjectType
-  titleText: string
-  createdTimestamp: number
-  editedTimestamp: number
-  sourcePath: string
+  blocks: Block[];
+  objectType: ObjectType;
+  titleText: string;
+  createdTimestamp: number;
+  editedTimestamp: number;
+  sourcePath: string;
+  description: string;
+  emoji: string;
 }
