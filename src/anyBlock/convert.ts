@@ -75,6 +75,15 @@ const createCoreBlocks = (
     );
   }
 
+  // Keep shows attachments above the note text.
+  const attachmentBlocks: BlockWithId[] = (note.attachments ?? []).map(
+    (attachment) =>
+      createBlock("File", {
+        path: attachment.filePath,
+        mimetype: attachment.mimetype,
+      }),
+  );
+
   const textBlocks: BlockWithId[] = note.textContent
     ? note.textContent
         .split("\n")
@@ -99,6 +108,7 @@ const createCoreBlocks = (
   let allBlocks: BlockWithId[] = [
     headerBlock,
     ...descriptionRelationBlock,
+    ...attachmentBlocks,
     ...textBlocks,
     ...listBlocks,
     ...annotationBlocks,

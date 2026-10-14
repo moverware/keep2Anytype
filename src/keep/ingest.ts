@@ -1,6 +1,6 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import type { GoogleKeepNote } from "./types";
+import type { Attachment, GoogleKeepNote } from "./types";
 
 const parseGoogleKeepNote = (
   jsonString: string,
@@ -96,6 +96,48 @@ const isGoogleKeepNote = (object: any): object is GoogleKeepNote => {
   return true;
 };
 
+const exists = (filePath: string) =>
+  fs.access(filePath).then(
+    () => true,
+    () => false,
+  );
+
+// Takeout sometimes names an image `.jpeg` in the note JSON but writes it to
+// disk as `.jpg`, or the other way round.
+const candidatePaths = (filePath: string): string[] => {
+  const { dir, name, ext } = path.parse(filePath);
+  const swapped = { ".jpeg": ".jpg", ".jpg": ".jpeg" }[ext.toLowerCase()];
+  return swapped ? [filePath, path.join(dir, name + swapped)] : [filePath];
+};
+
+// Returns the note's attachments with absolute paths, which Anytype needs to
+// upload them, dropping any whose file is missing from the export.
+const resolveAttachments = async (
+  attachments: Attachment[],
+  folderPath: string,
+  notePath: string,
+): Promise<Attachment[]> => {
+  const resolved: Attachment[] = [];
+  for (const attachment of attachments) {
+    const absolutePath = path.resolve(folderPath, attachment.filePath);
+    let found: string | undefined;
+    for (const candidate of candidatePaths(absolutePath)) {
+      if (await exists(candidate)) {
+        found = candidate;
+        break;
+      }
+    }
+    if (found) {
+      resolved.push({ ...attachment, filePath: found });
+    } else {
+      console.warn(
+        `Skipping attachment ${attachment.filePath} of ${notePath}: file not found`,
+      );
+    }
+  }
+  return resolved;
+};
+
 export const ingestKeepJsonFiles = async (
   folderPath: string,
   includeArchive: boolean,
@@ -116,6 +158,13 @@ export const ingestKeepJsonFiles = async (
         }
         if (note.isTrashed && !includeTrashed) {
           continue;
+        }
+        if (note.attachments) {
+          note.attachments = await resolveAttachments(
+            note.attachments,
+            folderPath,
+            filePath,
+          );
         }
         notes.push(note);
       } catch (error: any) {

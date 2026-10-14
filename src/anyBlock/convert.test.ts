@@ -99,6 +99,42 @@ describe("convertToAnyBlockPage", () => {
     expect(link?.text?.marks?.marks?.[0].param).toBe("https://example.com");
   });
 
+  it("puts attachments above the text as file blocks", () => {
+    const { blocks } = convert({
+      textContent: "caption",
+      attachments: [
+        { filePath: "/takeout/Keep/cat.png", mimetype: "image/png" },
+        { filePath: "/takeout/Keep/memo.3gp", mimetype: "audio/3gpp" },
+        { filePath: "/takeout/Keep/scan.pdf", mimetype: "application/pdf" },
+      ],
+    });
+    const [root] = blocks;
+    const byId = new Map(blocks.map((b) => [b.id, b]));
+    const body = root.childrenIds!.map((id) => byId.get(id)!).slice(1);
+
+    expect(body.map((b) => b.file ?? b.text?.text)).toEqual([
+      {
+        name: "/takeout/Keep/cat.png",
+        type: "Image",
+        mime: "image/png",
+        state: "Empty",
+      },
+      {
+        name: "/takeout/Keep/memo.3gp",
+        type: "Audio",
+        mime: "audio/3gpp",
+        state: "Empty",
+      },
+      {
+        name: "/takeout/Keep/scan.pdf",
+        type: "PDF",
+        mime: "application/pdf",
+        state: "Empty",
+      },
+      "caption",
+    ]);
+  });
+
   it("lists every block except the header extras as a child of the root", () => {
     const { blocks } = convert({ title: "Hi", textContent: "a\nb" });
     const [root, ...rest] = blocks;

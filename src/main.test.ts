@@ -56,6 +56,37 @@ describe("main", () => {
     expect(page.snapshot.data.details.name).toBe("Shopping");
   });
 
+  it("points image blocks at the image in the export folder", async () => {
+    const keep = path.join(dir, "Keep");
+    await writeFile(path.join(keep, "cat.jpg"), "jpg");
+    await writeFile(
+      path.join(keep, "Cat.json"),
+      JSON.stringify(
+        rawNote({
+          title: "Cat",
+          attachments: [{ filePath: "cat.jpeg", mimetype: "image/jpeg" }],
+        }),
+      ),
+    );
+
+    await main(settings());
+
+    const page = JSON.parse(
+      await readFile(path.join(settings().output, "Cat.json"), "utf8"),
+    );
+    const files = page.snapshot.data.blocks.filter(
+      (b: { file?: unknown }) => b.file,
+    );
+    expect(files).toEqual([
+      expect.objectContaining({
+        file: expect.objectContaining({
+          name: path.join(keep, "cat.jpg"),
+          type: "Image",
+        }),
+      }),
+    ]);
+  });
+
   it("fails when the folder has no Keep notes", async () => {
     await expect(main(settings())).rejects.toThrow(/No Keep notes found/);
   });
